@@ -418,7 +418,7 @@ body.lightbox-open { overflow: hidden; }
   transition: transform 0.3s var(--ease), opacity 0.2s var(--ease);
 }
 .nav-toggle.is-open .nav-toggle__bar:nth-child(1) { transform: translateY(8px) rotate(45deg); }
-.nav-toggle.is-open .nav-toggle__bar:nth-child(2) { transform: translateY(-0px) rotate(-45deg); }
+.nav-toggle.is-open .nav-toggle__bar:nth-child(2) { transform: translateY(-8px) rotate(-45deg); }
 
 @media (max-width: 991px) {
   .nav {
@@ -1523,4 +1523,16 @@ html:not(.js) .loader { display: none; }
   .loader { display: none; }
   .js .reveal { opacity: 1 !important; transform: none !important; }
   .hero__scrollcue { display: none; }
+}
+/* --- MOBILE NAV FIX --------------------------------------------------------
+   The frosted blur on .header makes it the containing block for position:
+   fixed descendants, which traps the mobile menu panel inside the 66px
+   header bar. Blur is therefore desktop-only. Do not re-add backdrop-filter
+   below 992px unless the menu panel is moved outside the header markup. */
+@media (max-width: 991px) {
+  .header {
+    background: var(--cream);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }

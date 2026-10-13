@@ -2,12 +2,14 @@
    OH MY DOG Grooming Salon — script.js
    Vanilla JavaScript only. Each feature lives in its own small module.
    --------------------------------------------------------------------------
-   1.  Mobile navigation          7.  Gallery lightbox
-   2.  Sticky header state        8.  "Enquire" service buttons
-   3.  Scroll manager (shared)    9.  Contact form validation
-   4.  Scroll reveal             10.  Back-to-top button
-   5.  Scroll spy (active nav)   11.  Mobile bottom CTA
-   6.  Gallery filtering         12.  Toast + image fallback + year
+   0.  Page loader                8.  Gallery lightbox
+   1.  Mobile navigation          9.  "Enquire" service buttons
+   2.  Sticky header state       10.  Contact form validation
+   3.  Scroll manager (shared)   11.  Back-to-top button
+   4.  Toast + placeholder links 12.  Mobile bottom CTA
+   5.  Scroll reveal             13.  Image fallback + footer year
+   6.  Scroll spy (active nav)
+   7.  Gallery filtering
    ========================================================================== */
 
 (function () {
@@ -50,53 +52,9 @@
       }
     };
   })();
-    /* ---------------------------------------------------------------------
-     Page loader — draws the dog, then hands over to the hero animation.
-     First visit ≈ 2s · repeat visits ≈ 0.5s · reduced-motion: skipped.
-  --------------------------------------------------------------------- */
-  function initLoader() {
-    var loader = select('#loader');
-    if (!loader) { document.body.classList.add('is-loaded'); return; }
-
-    if (reduceMotion.matches) {
-      loader.remove();
-      document.body.classList.add('is-loaded');
-      return;
-    }
-
-    var seen = false;
-    try { seen = sessionStorage.getItem('omd-loaded') === '1'; } catch (e) {}
-    if (seen) loader.classList.add('is-repeat');
-
-    document.body.classList.add('is-loading');
-
-    var MIN_DISPLAY = seen ? 550 : 1950;
-    var start = Date.now();
-    var finished = false;
-
-    function finish() {
-      if (finished) return;
-      finished = true;
-      loader.classList.add('is-done');
-      document.body.classList.remove('is-loading');
-      document.body.classList.add('is-loaded'); // triggers the hero entrance
-      window.setTimeout(function () { loader.remove(); }, 1100);
-      try { sessionStorage.setItem('omd-loaded', '1'); } catch (e) {}
-    }
-
-    function ready() {
-      var wait = Math.max(0, MIN_DISPLAY - (Date.now() - start));
-      window.setTimeout(finish, wait);
-    }
-
-    if (document.readyState === 'complete') ready();
-    else window.addEventListener('load', ready);
-
-    window.setTimeout(finish, seen ? 1600 : 4000); // failsafe — never trap the user
-  }
 
   /* ---------------------------------------------------------------------
-     Toast — small non-blocking notices for placeholder links.
+     4a. Toast — small non-blocking notices for placeholder links.
   --------------------------------------------------------------------- */
   var Toast = (function () {
     var region = null;
@@ -127,6 +85,69 @@
 
     return { show: show };
   })();
+
+  /* ---------------------------------------------------------------------
+     0. Page loader — draws the dog, then hands over to the hero animation.
+        First visit ≈ 2s · repeat visits ≈ 0.5s · reduced-motion: skipped.
+        Add ?loader to the URL to force the full animation (for demos).
+  --------------------------------------------------------------------- */
+  function initLoader() {
+    var loader = select('#loader');
+    if (!loader) { document.body.classList.add('is-loaded'); return; }
+
+    if (reduceMotion.matches) {
+      loader.remove();
+      document.body.classList.add('is-loaded');
+      return;
+    }
+
+    var forceDemo = /([?&])loader(=1|&|$)/.test(window.location.search);
+
+    var seen = false;
+    if (!forceDemo) {
+      try { seen = sessionStorage.getItem('omd-loaded') === '1'; } catch (e) {}
+    }
+    if (seen) loader.classList.add('is-repeat');
+
+    document.body.classList.add('is-loading');
+
+    var MIN_DISPLAY = seen ? 550 : 1950;
+    var start = Date.now();
+    var finished = false;
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      loader.classList.add('is-done');
+      document.body.classList.remove('is-loading');
+      document.body.classList.add('is-loaded'); // triggers the hero entrance
+      window.setTimeout(function () { loader.remove(); }, 1100);
+      try { sessionStorage.setItem('omd-loaded', '1'); } catch (e) {}
+    }
+
+    function ready() {
+      var wait = Math.max(0, MIN_DISPLAY - (Date.now() - start));
+      window.setTimeout(finish, wait);
+    }
+
+    if (document.readyState === 'complete') ready();
+    else window.addEventListener('load', ready);
+
+    window.setTimeout(finish, 4000); // failsafe — never trap the user
+  }
+
+  /* ---------------------------------------------------------------------
+     4b. Placeholder links (social profiles, reviews URL) — clearly flagged,
+         never silently dead: a toast explains the link is coming soon.
+  --------------------------------------------------------------------- */
+  function initPlaceholderLinks() {
+    selectAll('a[href="#"]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        Toast.show(a.dataset.toast || 'This link is a placeholder — the destination will be added soon.');
+      });
+    });
+  }
 
   /* ---------------------------------------------------------------------
      1. Mobile navigation — hamburger toggle, Escape to close,
@@ -178,20 +199,7 @@
   }
 
   /* ---------------------------------------------------------------------
-     Placeholder links (social profiles, reviews URL) — clearly flagged,
-     never silently dead: a toast explains the link is coming soon.
-  --------------------------------------------------------------------- */
-  function initPlaceholderLinks() {
-    selectAll('a[href="#"]').forEach(function (a) {
-      a.addEventListener('click', function (e) {
-        e.preventDefault();
-        Toast.show(a.dataset.toast || 'This link is a placeholder — the destination will be added soon.');
-      });
-    });
-  }
-
-  /* ---------------------------------------------------------------------
-     4. Scroll reveal — IntersectionObserver adds .is-visible once.
+     5. Scroll reveal — IntersectionObserver adds .is-visible once.
   --------------------------------------------------------------------- */
   function initReveal() {
     var items = selectAll('.reveal');
@@ -215,7 +223,7 @@
   }
 
   /* ---------------------------------------------------------------------
-     5. Scroll spy — highlights the nav link for the section in view.
+     6. Scroll spy — highlights the nav link for the section in view.
         Secondary sections point at their parent via data-spy="about" etc.
   --------------------------------------------------------------------- */
   function initScrollSpy() {
@@ -262,7 +270,7 @@
   }
 
   /* ---------------------------------------------------------------------
-     6. Gallery filtering — shows/hides grid items by category with a
+     7. Gallery filtering — shows/hides grid items by category with a
         soft re-entry animation and a screen-reader status update.
   --------------------------------------------------------------------- */
   function initGalleryFilter() {
@@ -312,7 +320,7 @@
   }
 
   /* ---------------------------------------------------------------------
-     7. Gallery lightbox — open/close, prev/next within the filtered set,
+     8. Gallery lightbox — open/close, prev/next within the filtered set,
         keyboard navigation (Escape / arrows / focus trap), click-outside
         to close, focus restore, and simple touch swipe.
   --------------------------------------------------------------------- */
@@ -428,7 +436,7 @@
   }
 
   /* ---------------------------------------------------------------------
-     8. "Enquire" service buttons — pre-select the service in the contact
+     9. "Enquire" service buttons — pre-select the service in the contact
         form, scroll there and gently highlight the form card.
   --------------------------------------------------------------------- */
   function initEnquireButtons() {
@@ -466,9 +474,9 @@
   }
 
   /* ---------------------------------------------------------------------
-     9. Contact form validation — friendly inline messages, honest
-        success state. Nothing is sent until a real endpoint is connected
-        (see the TODO comment on the form in index.html).
+     10. Contact form validation — friendly inline messages, honest
+         success state. Nothing is sent until a real endpoint is connected
+         (see the TODO comment on the form in index.html).
   --------------------------------------------------------------------- */
   function initContactForm() {
     var form = select('#contact-form');
@@ -572,7 +580,7 @@
   }
 
   /* ---------------------------------------------------------------------
-     10. Back-to-top button.
+     11. Back-to-top button.
   --------------------------------------------------------------------- */
   function initBackToTop() {
     var btn = select('.to-top');
@@ -586,7 +594,7 @@
   }
 
   /* ---------------------------------------------------------------------
-     11. Mobile bottom CTA — appears once the user scrolls past the hero.
+     12. Mobile bottom CTA — appears once the user scrolls past the hero.
   --------------------------------------------------------------------- */
   function initMobileCta() {
     var bar = select('.mobile-cta');
@@ -598,7 +606,7 @@
   }
 
   /* ---------------------------------------------------------------------
-     12a. Image fallback — if a stock photo URL ever breaks, swap in a
+     13a. Image fallback — if a stock photo URL ever breaks, swap in a
           placeholder so the layout never shows a broken image.
   --------------------------------------------------------------------- */
   function initImageFallback() {
@@ -611,7 +619,7 @@
   }
 
   /* ---------------------------------------------------------------------
-     12b. Footer year.
+     13b. Footer year.
   --------------------------------------------------------------------- */
   function initYear() {
     var el = select('#year');
@@ -644,4 +652,3 @@
     init();
   }
 })();
-
